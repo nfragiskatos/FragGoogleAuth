@@ -5,12 +5,13 @@ import com.example.fraggoogleauth.domain.repository.Repository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class RepositoryImpl @Inject constructor(private val dataStore: DataStoreOperations) : Repository {
+class RepositoryImpl @Inject constructor(private val dataStoreOperations: DataStoreOperations) :
+    Repository {
     override suspend fun saveSignedInState(signedIn: Boolean) {
-        dataStore.saveSignedInState(signedIn)
+        dataStoreOperations.saveSignedInState(signedIn)
     }
 
     override fun readSignedInState(): Flow<Boolean> {
-        return dataStore.readSignedInState()
+        return dataStoreOperations.readSignedInState()
     }
 }
