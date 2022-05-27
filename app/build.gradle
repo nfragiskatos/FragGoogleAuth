@@ -6,6 +6,22 @@ plugins {
     id 'kotlinx-serialization'
 }
 
+// sensitive data read
+def noKeyFound = '"NO_KEY_FOUND"'
+def clientId = noKeyFound
+def sensitiveDataFile = file('../sensitive_data.txt')
+Properties sensitiveData = new Properties()
+
+if (sensitiveDataFile.canRead()) {
+    // Read the sensitive data from file sensitive_data.txt
+    sensitiveData.load(new FileInputStream(sensitiveDataFile))
+    if (sensitiveData != null) {
+        if (sensitiveData.containsKey('clientId')) {
+            clientId = sensitiveData['clientId']
+        }
+    }
+}
+
 android {
     compileSdk 32
 
@@ -17,6 +33,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "CLIENT_ID", clientId
+        resValue "string", "CLIENT_ID", clientId
+
         vectorDrawables {
             useSupportLibrary true
         }
