@@ -1,5 +1,6 @@
 package com.example.fraggoogleauth.di
 
+import com.example.fraggoogleauth.data.remote.KtorApi
 import com.example.fraggoogleauth.util.Constants
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
@@ -29,7 +30,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun providesHttpClient(cookieManager: CookieManager) : OkHttpClient {
+    fun providesHttpClient(cookieManager: CookieManager): OkHttpClient {
         return OkHttpClient.Builder()
             .readTimeout(15, TimeUnit.SECONDS)
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -39,12 +40,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun providesRetrofit(okHttpClient: OkHttpClient) : Retrofit {
+    fun providesRetrofit(okHttpClient: OkHttpClient): Retrofit {
         val contentType = MediaType.get("application/json")
         return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(Json.asConverterFactory(contentType))
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun providesKtoApi(retrofit: Retrofit): KtorApi {
+        return retrofit.create(KtorApi::class.java)
     }
 }
