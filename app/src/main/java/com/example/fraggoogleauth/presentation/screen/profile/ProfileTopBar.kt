@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.fraggoogleauth.R
+import com.example.fraggoogleauth.component.DisplayAlertDialog
 import com.example.fraggoogleauth.ui.theme.topAppBarBackgroundColor
 import com.example.fraggoogleauth.ui.theme.topAppBarContentColor
 
@@ -35,8 +36,18 @@ fun ProfileTopBarActions(
     onSave: () -> Unit,
     onDeleteAllConfirmed: () -> Unit
 ) {
+    var openDialog by remember {
+        mutableStateOf(false)
+    }
+
+    DisplayAlertDialog(
+        openDialog = openDialog,
+        onYesClicked = { onDeleteAllConfirmed() },
+        onDialogClosed = { openDialog = false }
+    )
+
     SaveAction(onSave)
-    DeleteAllAction(onDeleteAllConfirmed)
+    DeleteAllAction(onDeleteClicked = { openDialog = true })
 }
 
 @Composable
@@ -51,7 +62,7 @@ fun SaveAction(onSave: () -> Unit) {
 }
 
 @Composable
-fun DeleteAllAction(onDeleteAllConfirmed: () -> Unit) {
+fun DeleteAllAction(onDeleteClicked: () -> Unit) {
     var expanded by remember {
         mutableStateOf(false)
     }
@@ -70,7 +81,7 @@ fun DeleteAllAction(onDeleteAllConfirmed: () -> Unit) {
         ) {
             DropdownMenuItem(onClick = {
                 expanded = false
-                onDeleteAllConfirmed()
+                onDeleteClicked()
             }) {
                 Text(
                     text = "Delete Account",
