@@ -5,8 +5,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fraggoogleauth.domain.model.ApiRequest
-import com.example.fraggoogleauth.domain.model.ApiResponse
 import com.example.fraggoogleauth.domain.model.MessageBarState
 import com.example.fraggoogleauth.domain.repository.Repository
 import com.example.fraggoogleauth.util.RequestState
@@ -24,9 +22,9 @@ class LoginViewModel @Inject constructor(private val repository: Repository) : V
     private val _messageBarState: MutableState<MessageBarState> = mutableStateOf(MessageBarState())
     val messageBarState: State<MessageBarState> = _messageBarState
 
-    private val _apiResponse: MutableState<RequestState<ApiResponse>> =
-        mutableStateOf(RequestState.Idle)
-    val apiResponse: State<RequestState<ApiResponse>> = _apiResponse
+    private val _isUserAuthenticated: MutableState<Boolean> =
+        mutableStateOf(false)
+    val isUserAuthenticated: State<Boolean> = _isUserAuthenticated
 
     init {
         viewModelScope.launch {
@@ -46,19 +44,25 @@ class LoginViewModel @Inject constructor(private val repository: Repository) : V
         _messageBarState.value = MessageBarState(error = GoogleAccountNotFoundException())
     }
 
-    fun verifyTokenOnBackend(request: ApiRequest) {
-        _apiResponse.value = RequestState.Loading
+    fun verifyTokenOnBackend(tokenId: String) {
+        _isUserAuthenticated.value = false
         try {
             viewModelScope.launch(Dispatchers.IO) {
-                val response = repository.verifyTokenOnBackend(request)
-                _apiResponse.value = RequestState.Success(response)
-                _messageBarState.value = MessageBarState(
-                    message = response.message,
-                    error = response.error
-                )
+                when (val response = repository.verifyTokenOnBackend(tokenId)) {
+                    is RequestState.Error -> {
+                        _messageBarState.value = MessageBarState(error = response.error)
+                    }
+                    is RequestState.Success -> {
+                        _isUserAuthenticated.value = response.data
+                        _messageBarState.value = MessageBarState(
+                            message = response.message,
+                        )
+                    }
+                    else -> {}
+                }
+
             }
         } catch (e: Exception) {
-            _apiResponse.value = RequestState.Error(e)
             _messageBarState.value = MessageBarState(error = e)
         }
     }

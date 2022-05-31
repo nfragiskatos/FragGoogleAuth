@@ -1,8 +1,8 @@
-package com.example.fraggoogleauth.domain.model
+package com.example.fraggoogleauth.data.remote.dto
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ApiRequest(
+data class ApiRequestDto(
     val tokenId: String
 )

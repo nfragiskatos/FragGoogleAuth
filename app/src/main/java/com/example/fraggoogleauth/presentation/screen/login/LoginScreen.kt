@@ -8,12 +8,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.example.fraggoogleauth.domain.model.ApiRequest
-import com.example.fraggoogleauth.domain.model.ApiResponse
 import com.example.fraggoogleauth.navigation.Screen
 import com.example.fraggoogleauth.presentation.screen.common.StartActivityForResult
 import com.example.fraggoogleauth.presentation.screen.common.signIn
-import com.example.fraggoogleauth.util.RequestState
 
 @Composable
 fun LoginScreen(
@@ -22,7 +19,7 @@ fun LoginScreen(
 ) {
     val signedInState by loginViewModel.signedInState
     val messageBarState by loginViewModel.messageBarState
-    val apiResponse by loginViewModel.apiResponse
+    val isUserAuthenticated by loginViewModel.isUserAuthenticated
 
     Scaffold(
         topBar = {
@@ -43,7 +40,7 @@ fun LoginScreen(
     StartActivityForResult(
         key = signedInState,
         onResultReceived = { tokenId ->
-            loginViewModel.verifyTokenOnBackend(request = ApiRequest(tokenId = tokenId))
+            loginViewModel.verifyTokenOnBackend(tokenId)
         },
         onDialogDismissed = {
             loginViewModel.saveSignedInState(false)
@@ -63,17 +60,11 @@ fun LoginScreen(
         }
     }
 
-    LaunchedEffect(key1 = apiResponse) {
-        when (apiResponse) {
-            is RequestState.Success -> {
-                val response = (apiResponse as RequestState.Success<ApiResponse>).data.success
-                if (response) {
-                    navigateToProfileScreen(navController)
-                } else {
-                    loginViewModel.saveSignedInState(false)
-                }
-            }
-            else -> {}
+    LaunchedEffect(key1 = isUserAuthenticated) {
+        if (isUserAuthenticated) {
+            navigateToProfileScreen(navController)
+        } else {
+            loginViewModel.saveSignedInState(false)
         }
     }
 }

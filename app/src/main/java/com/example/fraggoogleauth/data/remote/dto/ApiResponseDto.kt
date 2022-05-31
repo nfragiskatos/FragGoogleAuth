@@ -1,12 +1,12 @@
-package com.example.fraggoogleauth.domain.model
+package com.example.fraggoogleauth.data.remote.dto
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
-data class ApiResponse(
+data class ApiResponseDto(
     val success: Boolean,
-    val user: User? = null,
+    val user: UserDto? = null,
     val message: String? = null,
     @Transient val error: Exception? = null
 )

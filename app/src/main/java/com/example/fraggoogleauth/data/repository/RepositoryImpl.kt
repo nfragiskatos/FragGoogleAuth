@@ -1,11 +1,14 @@
 package com.example.fraggoogleauth.data.repository
 
+import com.example.fraggoogleauth.data.mapper.toUser
+import com.example.fraggoogleauth.data.mapper.toUserUpdateDto
 import com.example.fraggoogleauth.data.remote.KtorApi
-import com.example.fraggoogleauth.domain.model.ApiRequest
-import com.example.fraggoogleauth.domain.model.ApiResponse
+import com.example.fraggoogleauth.data.remote.dto.ApiRequestDto
+import com.example.fraggoogleauth.domain.model.User
 import com.example.fraggoogleauth.domain.model.UserUpdate
 import com.example.fraggoogleauth.domain.repository.DataStoreOperations
 import com.example.fraggoogleauth.domain.repository.Repository
+import com.example.fraggoogleauth.util.RequestState
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -22,43 +25,68 @@ class RepositoryImpl @Inject constructor(
         return dataStoreOperations.readSignedInState()
     }
 
-    override suspend fun verifyTokenOnBackend(request: ApiRequest): ApiResponse {
+    override suspend fun verifyTokenOnBackend(tokenId: String): RequestState<Boolean> {
         return try {
-            ktorApi.verifyTokenOnBackend(request)
+            val response = ktorApi.verifyTokenOnBackend(ApiRequestDto(tokenId = tokenId))
+            RequestState.Success(
+                data = response.success,
+                message = response.message
+            )
         } catch (e: Exception) {
-            ApiResponse(success = false, error = e)
+            RequestState.Error(error = e)
         }
     }
 
-    override suspend fun getUserInfo(): ApiResponse {
+    override suspend fun getUserInfo(): RequestState<User> {
         return try {
-            ktorApi.getUserInfo()
+            val response = ktorApi.getUserInfo()
+            if (response.user != null) {
+                RequestState.Success(
+                    data = response.user.toUser(),
+                    message = response.message
+                )
+            } else {
+                RequestState.Error(Exception("User not found."))
+            }
+
         } catch (e: Exception) {
-            ApiResponse(success = false, error = e)
+            RequestState.Error(error = e)
         }
     }
 
-    override suspend fun updateUser(userUpdate: UserUpdate): ApiResponse {
+    override suspend fun updateUser(userUpdate: UserUpdate): RequestState<Boolean> {
         return try {
-            ktorApi.updateUser(userUpdate)
+            val response = ktorApi.updateUser(userUpdate.toUserUpdateDto())
+            RequestState.Success(
+                data = response.success,
+                message = response.message
+            )
         } catch (e: Exception) {
-            ApiResponse(success = false, error = e)
+            RequestState.Error(error = e)
         }
     }
 
-    override suspend fun deleteUser(): ApiResponse {
+    override suspend fun deleteUser(): RequestState<Boolean> {
         return try {
-            ktorApi.deleteUser()
+            val response = ktorApi.deleteUser()
+            RequestState.Success(
+                data = response.success,
+                message = response.message
+            )
         } catch (e: Exception) {
-            ApiResponse(success = false, error = e)
+            RequestState.Error(error = e)
         }
     }
 
-    override suspend fun clearSession(): ApiResponse {
+    override suspend fun clearSession(): RequestState<Boolean> {
         return try {
-            ktorApi.clearSession()
+            val response = ktorApi.clearSession()
+            RequestState.Success(
+                data = response.success,
+                message = response.message
+            )
         } catch (e: Exception) {
-            ApiResponse(success = false, error = e)
+            RequestState.Error(error = e)
         }
     }
 }
