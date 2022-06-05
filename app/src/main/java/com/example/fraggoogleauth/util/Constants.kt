@@ -5,4 +5,6 @@ object Constants {
 
     const val PREFERENCES_SIGNED_IN_KEY = "signed_in_key"
     const val PREFERENCES_NAME = "app_preferences"
+
+    const val MAX_NAME_LENGTH = 20
 }
