@@ -37,6 +37,9 @@ class ProfileViewModel @Inject constructor(
     private val _isLoading: MutableState<Boolean> = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
+    private val _sessionCleared: MutableState<Boolean> = mutableStateOf(false)
+    val sessionCleared: State<Boolean> = _sessionCleared
+
     init {
         getUserInfo()
     }
@@ -111,24 +114,52 @@ class ProfileViewModel @Inject constructor(
 
         if (verified) {
             viewModelScope.launch(Dispatchers.IO) {
-                val response = repository.updateUser(
-                    UserUpdate(
-                        firstName = firstName.value,
-                        lastName = lastName.value
+                try {
+                    val response = repository.updateUser(
+                        UserUpdate(
+                            firstName = firstName.value,
+                            lastName = lastName.value
+                        )
                     )
-                )
-                when (response) {
-                    is RequestState.Error -> {
-                        _messageBarState.value = MessageBarState(error = response.error)
+                    when (response) {
+                        is RequestState.Error -> {
+                            _messageBarState.value = MessageBarState(error = response.error)
+                        }
+                        is RequestState.Success -> {
+                            _messageBarState.value = MessageBarState(message = response.message)
+                        }
+                        else -> {}
                     }
-                    is RequestState.Success -> {
-                        _messageBarState.value = MessageBarState(message = response.message)
-                    }
-                    else -> {}
+                } catch (e: Exception) {
+                    _messageBarState.value = MessageBarState(error = e)
                 }
             }
         } else {
             _messageBarState.value = MessageBarState(error = exception)
+        }
+    }
+
+    fun clearSession() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+            try {
+                val response = repository.clearSession()
+                when (response) {
+                    is RequestState.Error -> {
+                        _isLoading.value = false
+                        _messageBarState.value = MessageBarState(error = response.error)
+                    }
+                    is RequestState.Success -> {
+                        _isLoading.value = false
+                        _messageBarState.value = MessageBarState(message = response.message)
+                        _sessionCleared.value = true
+                    }
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _messageBarState.value = MessageBarState(error = null)
+            }
         }
     }
 
@@ -141,6 +172,12 @@ class ProfileViewModel @Inject constructor(
     fun updateLastName(newName: String) {
         if (newName.length < MAX_NAME_LENGTH) {
             _lastName.value = newName
+        }
+    }
+
+    fun saveSignedInState(signedInState: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.saveSignedInState(signedInState)
         }
     }
 }
