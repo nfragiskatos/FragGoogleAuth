@@ -30,7 +30,9 @@ fun ProfileScreen(
                 onSave = {
                     profileViewModel.updateUserInfo()
                 },
-                onDeleteAllConfirmed = {}
+                onDeleteAllConfirmed = {
+                    profileViewModel.deleteUser()
+                }
             )
         },
         content = {

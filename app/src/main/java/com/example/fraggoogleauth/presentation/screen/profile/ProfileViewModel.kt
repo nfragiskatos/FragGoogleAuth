@@ -180,6 +180,30 @@ class ProfileViewModel @Inject constructor(
             repository.saveSignedInState(signedInState)
         }
     }
+
+    fun deleteUser() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+            try {
+                val response = repository.deleteUser()
+                when (response) {
+                    is RequestState.Error -> {
+                        _isLoading.value = false
+                        _messageBarState.value = MessageBarState(error = response.error)
+                    }
+                    is RequestState.Success -> {
+                        _isLoading.value = false
+                        _messageBarState.value = MessageBarState(message = response.message)
+                        _sessionCleared.value = true
+                    }
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _messageBarState.value = MessageBarState(error = e)
+            }
+        }
+    }
 }
 
 class EmptyFieldException(
