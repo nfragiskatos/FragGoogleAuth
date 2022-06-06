@@ -14,6 +14,7 @@ import com.example.fraggoogleauth.util.RequestState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,7 +45,10 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch() {
             try {
                 _isLoading.value = true
-                when (val response = repository.getUserInfo()) {
+                val response = withContext(Dispatchers.IO) {
+                    repository.getUserInfo()
+                }
+                when (response) {
                     is RequestState.Error -> {
                         _messageBarState.value = MessageBarState(error = response.error)
                     }
