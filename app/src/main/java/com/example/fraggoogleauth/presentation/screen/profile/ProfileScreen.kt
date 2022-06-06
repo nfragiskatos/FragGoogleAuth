@@ -21,7 +21,9 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             ProfileTopBar(
-                onSave = { },
+                onSave = {
+                    profileViewModel.updateUserInfo()
+                },
                 onDeleteAllConfirmed = {}
             )
         },

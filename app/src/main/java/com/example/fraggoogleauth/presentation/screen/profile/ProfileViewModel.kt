@@ -7,10 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fraggoogleauth.domain.model.MessageBarState
 import com.example.fraggoogleauth.domain.model.User
+import com.example.fraggoogleauth.domain.model.UserUpdate
 import com.example.fraggoogleauth.domain.repository.Repository
 import com.example.fraggoogleauth.util.Constants.MAX_NAME_LENGTH
 import com.example.fraggoogleauth.util.RequestState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -55,10 +57,74 @@ class ProfileViewModel @Inject constructor(
                     }
                     else -> {}
                 }
-                _isLoading.value = false
             } catch (e: Exception) {
                 _messageBarState.value = MessageBarState(error = e)
+            } finally {
+                _isLoading.value = false
             }
+        }
+    }
+
+    fun updateUserInfo() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _isLoading.value = true
+                if (user.value != null) {
+                    when (val response = repository.getUserInfo()) {
+                        is RequestState.Error -> {
+                            _isLoading.value = false
+                            _messageBarState.value = MessageBarState(error = response.error)
+                        }
+                        is RequestState.Success -> {
+                            _isLoading.value = false
+                            verifyAndUpdate(currentUser = response.data)
+                        }
+                        else -> {}
+                    }
+                }
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _messageBarState.value = MessageBarState(error = e)
+            }
+        }
+    }
+
+    private fun verifyAndUpdate(currentUser: User) {
+        val (verified, exception) =
+            // check for empty fields
+            if (firstName.value.isBlank() || lastName.value.isBlank()) {
+                Pair(false, EmptyFieldException())
+            } else {
+                // check if trying to save the same values
+                if (currentUser.name.split(" ").first() == firstName.value &&
+                    currentUser.name.split(" ").last() == lastName.value
+                ) {
+                    Pair(false, NothingToUpdateException())
+                } else {
+                    Pair(true, null)
+                }
+            }
+
+        if (verified) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val response = repository.updateUser(
+                    UserUpdate(
+                        firstName = firstName.value,
+                        lastName = lastName.value
+                    )
+                )
+                when (response) {
+                    is RequestState.Error -> {
+                        _messageBarState.value = MessageBarState(error = response.error)
+                    }
+                    is RequestState.Success -> {
+                        _messageBarState.value = MessageBarState(message = response.message)
+                    }
+                    else -> {}
+                }
+            }
+        } else {
+            _messageBarState.value = MessageBarState(error = exception)
         }
     }
 
@@ -74,3 +140,11 @@ class ProfileViewModel @Inject constructor(
         }
     }
 }
+
+class EmptyFieldException(
+    override val message: String? = "Empty Input Field"
+) : Exception()
+
+class NothingToUpdateException(
+    override val message: String? = "Nothing to Update."
+) : Exception()
