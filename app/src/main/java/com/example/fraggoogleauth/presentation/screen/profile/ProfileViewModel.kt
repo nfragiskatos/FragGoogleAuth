@@ -40,6 +40,10 @@ class ProfileViewModel @Inject constructor(
     private val _sessionCleared: MutableState<Boolean> = mutableStateOf(false)
     val sessionCleared: State<Boolean> = _sessionCleared
 
+    private val _isUserAuthenticated: MutableState<Boolean> =
+        mutableStateOf(true)
+    val isUserAuthenticated: State<Boolean> = _isUserAuthenticated
+
     init {
         getUserInfo()
     }
@@ -202,6 +206,29 @@ class ProfileViewModel @Inject constructor(
                 _isLoading.value = false
                 _messageBarState.value = MessageBarState(error = e)
             }
+        }
+    }
+
+    fun verifyTokenOnBackend(tokenId: String) {
+        _isUserAuthenticated.value = false
+        try {
+            viewModelScope.launch(Dispatchers.IO) {
+                when (val response = repository.verifyTokenOnBackend(tokenId)) {
+                    is RequestState.Error -> {
+                        _messageBarState.value = MessageBarState(error = response.error)
+                    }
+                    is RequestState.Success -> {
+                        _isUserAuthenticated.value = response.data
+                        _messageBarState.value = MessageBarState(
+                            message = response.message,
+                        )
+                    }
+                    else -> {}
+                }
+
+            }
+        } catch (e: Exception) {
+            _messageBarState.value = MessageBarState(error = e)
         }
     }
 }
